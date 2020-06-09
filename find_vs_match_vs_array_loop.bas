@@ -3,10 +3,14 @@ Option Explicit
 Sub compare_search()
     Dim rng_test_data As Range
     Dim int_trial_counter As Integer
-    Dim arr_results(1 To 100, 1 To 4) As Variant, arr_thresholds As Variant, _
+    Dim arr_results(1 To 1, 1 To 5) As Variant, arr_thresholds As Variant, _
         arr_test_data As Variant, var_threshold As Variant
 
-    arr_thresholds = Array(0.8, 0.5, 0.2)
+    arr_thresholds = Array(0.99, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, _
+                           0.25, 0.2, 0.15, 0.1, 0.05, 0.001)
+    With ActiveWorkbook.Sheets(2)
+        .Cells(1, 1).Resize(1, UBound(arr_results, 2)).Value2 = Array("Threshold", "Find", "Match", "Array", "Elements")
+    End With
     For Each var_threshold In arr_thresholds
         Call generate_test_data(var_threshold)
 
@@ -17,9 +21,10 @@ Sub compare_search()
             arr_results(int_trial_counter, 2) = time_find(rng_test_data)
             arr_results(int_trial_counter, 3) = time_match(rng_test_data)
             arr_results(int_trial_counter, 4) = time_array(arr_test_data)
+            arr_results(int_trial_counter, 5) = time_array_items(arr_test_data)
         Next int_trial_counter
         With ActiveWorkbook.Sheets(2)
-            .Cells(.UsedRange.Rows.Count + 1, 1).Resize(UBound(arr_results, 1), 4).Value2 = arr_results
+            .Cells(.UsedRange.Rows.Count + 1, 1).Resize(UBound(arr_results, 1), UBound(arr_results, 2)).Value2 = arr_results
         End With
     Next var_threshold
 End Sub
@@ -48,7 +53,8 @@ Function time_find(ByVal rng_test_data As Range) As Double
     dbl_start_time = Timer
     Set rng_lookup_column = rng_test_data.Resize(rng_test_data.Rows.Count, 1)
     With rng_lookup_column
-        Set rng_found_result = .Find("foo", After:=.Cells(.Rows.Count, .Columns.Count), LookIn:=xlValues, SearchDirection:=xlNext, MatchCase:=False)
+        Set rng_found_result = .Find("foo", After:=.Cells(.Rows.Count, .Columns.Count), _
+                                     LookIn:=xlValues, SearchDirection:=xlNext, MatchCase:=False)
         str_first_address = rng_found_result.Address
         Do
             Set rng_found_result = .FindNext(rng_found_result)
@@ -94,4 +100,16 @@ Function time_array(ByVal arr_test_data As Variant) As Double
     Next lng_array_counter
     dbl_end_time = Timer
     time_array = dbl_end_time - dbl_start_time
+End Function
+
+Function time_array_items(ByVal arr_test_data As Variant) As Long
+    Dim lng_array_counter As Long, lng_result_array As Long
+
+    For lng_array_counter = LBound(arr_test_data, 1) To UBound(arr_test_data, 1)
+        If arr_test_data(lng_array_counter, 1) = "foo" And _
+           arr_test_data(lng_array_counter, 2) = "bar" Then
+            lng_result_array = lng_result_array + 1
+        End If
+    Next lng_array_counter
+    time_array_items = lng_result_array
 End Function
